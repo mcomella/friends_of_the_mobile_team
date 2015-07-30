@@ -3,3 +3,7 @@ one email address per line that you'd like to not be included in
 the query. Then:
 
     ./friends.py
+
+More usefully, on OS X:
+
+    ./friends.py | pbcopy
