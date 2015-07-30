@@ -7,3 +7,6 @@ like to not be included in the query. Then:
 More usefully, on OS X:
 
     ./friends.py | pbcopy
+
+Note that this script assumes it will be run on the day of the meeting because
+it generates a parameter that is the date from seven days ago.
