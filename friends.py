@@ -1,47 +1,71 @@
 #!/usr/bin/env python2
 
 from datetime import datetime, timedelta
-import urllib
+import requests
 
-URL = 'https://bugzilla.mozilla.org/buglist.cgi'
+import pprint
 
-CONST_PARAMS = [
-    'query_format=advanced',
-    'list_id=12431522',  # WTF
-    'product=Android%20Background%20Services',
-    'product=Firefox%20for%20Android',
-    'product=Firefox%20for%20iOS',
-    'chfield=bug_status',
-    'bug_status=RESOLVED',
-    'chfieldvalue=RESOLVED',
-    'chfieldto=Now',
-]
-DATE_PARAM = 'chfieldfrom={}'  # YYYY-MM-DD
+BASE_URL = 'https://bugzilla.mozilla.org/rest/bug'
 
-EMAIL_LINE = 'email{}={}'
-EMAIL_NUM_PARAM_LINES = [
-    'emailtype{}=notequals',
-    'emailassigned_to{}=1',
-]
+params = {
+    'include_fields': [
+        'assigned_to',
+        'id',
+        'summary'
+    ],
+    'product': [
+        'Android Background Services',
+        'Firefox for Android',
+        'Firefox for iOS',
+    ],
+    'bug_status': 'RESOLVED',
+    'chfield': 'bug_status',
+    'chfieldto': 'Now',
+    # TODO: Only fixed?
+    'chfieldvalue': 'RESOLVED',
+}
 
-def generate_email_params(address, count):
-    out = []
-    for line in EMAIL_NUM_PARAM_LINES:
-        out.append(line.format(count))
-    out.append(EMAIL_LINE.format(count, urllib.quote(address)))
-    return out
 
-def generate_date_param():
-    seven_days_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
-    return DATE_PARAM.format(seven_days_ago)
+def generate_email_param(address, count):
+    count_str = str(count)
 
-date_param = generate_date_param()
-email_params = []
+    type_key = 'emailtype' + count_str
+    email_assigned_key = 'emailassigned_to' + count_str
+    email_key = 'email' + count_str
+
+    return {
+        type_key: 'notequals',
+        email_assigned_key: '1',
+        email_key: address,
+    }
+
+
+def generate_from_date_param(days_ago):
+    'Returns the date seven days ago in the YYYY-MM-DD format.'
+    date_str = (datetime.now() - timedelta(days=days_ago)).strftime('%Y-%m-%d')
+    return {'chfieldfrom': date_str}
+
+
+def convert_to_wiki_markup(json):
+    json = json['bugs']
+
+    output = []
+    for bug in json:
+        name = bug['assigned_to_detail']['real_name']
+        line = '*' + name + ' fixed {{bug|' + str(bug['id']) + '}}'
+        line += ' - ' + bug['summary']
+        output += [line]
+    return '\n'.join(output)
+
+params.update(generate_from_date_param(7))
 with open('emails.txt', 'r') as f:
     for i, email in enumerate(f, start=1):
         email = email.strip()  # Remove newline
-        email_params.extend(generate_email_params(email, i))
+        params.update(generate_email_param(email, i))
 
-params = '&'.join(CONST_PARAMS + [date_param] + email_params)
-out = URL + '?' + params
-print(out)
+result = requests.get(BASE_URL, params=params)
+markup = convert_to_wiki_markup(result.json())
+
+# Some characters received may cause an exception so encode:
+#   http://stackoverflow.com/a/492711
+print markup.encode('utf-8')
