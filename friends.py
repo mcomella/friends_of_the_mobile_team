@@ -4,10 +4,17 @@ from datetime import datetime, timedelta
 import requests
 import urllib
 
+import pprint
+
 BASE_URL = 'https://bugzilla.mozilla.org/rest/bug'
 
 params = {
-    'include_fields': 'id,summary,status,assigned_to',
+    'include_fields': [
+        'id',
+        'summary',
+        'status',
+        'assigned_to',
+    ],
     'product': [
         'Android Background Services',
         'Firefox for Android',
@@ -16,35 +23,39 @@ params = {
     'bug_status': 'RESOLVED',
     'chfield': 'bug_status',
     'chfieldto': 'Now',
+    # TODO: Only fixed?
     'chfieldvalue': 'RESOLVED',
 }
 
-DATE_PARAM = 'chfieldfrom={}'  # YYYY-MM-DD
 
-EMAIL_LINE = 'email{}={}'
-EMAIL_NUM_PARAM_LINES = [
-    'emailtype{}=notequals',
-    'emailassigned_to{}=1',
-]
+def generate_email_param(address, count):
+    count_str = str(count)
 
-def generate_email_params(address, count):
-    out = []
-    for line in EMAIL_NUM_PARAM_LINES:
-        out.append(line.format(count))
-    out.append(EMAIL_LINE.format(count, urllib.quote(address)))
-    return out
+    type_key = 'emailtype' + count_str
+    email_assigned_key = 'emailassigned_to' + count_str
+    email_key = 'email' + count_str
 
-def generate_date_param():
-    seven_days_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
-    return DATE_PARAM.format(seven_days_ago)
+    return {
+        type_key: 'notequals',
+        email_assigned_key: '1',
+        email_key: address,
+    }
 
-date_param = generate_date_param()
-email_params = []
+
+def generate_from_date_param(days_ago):
+    'Returns the date seven days ago in the YYYY-MM-DD format.'
+    date_str = (datetime.now() - timedelta(days=days_ago)).strftime('%Y-%m-%d')
+    return {'chfieldfrom': date_str}
+
+
+params.update(generate_from_date_param(7))
 with open('emails.txt', 'r') as f:
     for i, email in enumerate(f, start=1):
         email = email.strip()  # Remove newline
-        email_params.extend(generate_email_params(email, i))
+        params.update(generate_email_param(email, i))
 
-params = '&'.join(CONST_PARAMS + [date_param] + email_params)
-out = URL + '?' + params
-print(out)
+r = requests.get(BASE_URL, params=params)
+
+# TOOD: Remove debug output.
+pp = pprint.PrettyPrinter(indent=4)
+pp.pprint(r.json())
