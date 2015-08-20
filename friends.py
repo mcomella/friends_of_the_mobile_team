@@ -1,21 +1,24 @@
 #!/usr/bin/env python2
 
 from datetime import datetime, timedelta
+import requests
 import urllib
 
-URL = 'https://bugzilla.mozilla.org/buglist.cgi'
+BASE_URL = 'https://bugzilla.mozilla.org/rest/bug'
 
-CONST_PARAMS = [
-    'query_format=advanced',
-    'list_id=12431522',  # WTF
-    'product=Android%20Background%20Services',
-    'product=Firefox%20for%20Android',
-    'product=Firefox%20for%20iOS',
-    'chfield=bug_status',
-    'bug_status=RESOLVED',
-    'chfieldvalue=RESOLVED',
-    'chfieldto=Now',
-]
+params = {
+    'include_fields': 'id,summary,status,assigned_to',
+    'product': [
+        'Android Background Services',
+        'Firefox for Android',
+        'Firefox for iOS',
+    ],
+    'bug_status': 'RESOLVED',
+    'chfield': 'bug_status',
+    'chfieldto': 'Now',
+    'chfieldvalue': 'RESOLVED',
+}
+
 DATE_PARAM = 'chfieldfrom={}'  # YYYY-MM-DD
 
 EMAIL_LINE = 'email{}={}'
