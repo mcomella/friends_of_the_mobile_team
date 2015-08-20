@@ -55,6 +55,7 @@ def convert_to_wiki_markup(json):
         line = '*' + name + ' fixed {{bug|' + str(bug['id']) + '}}'
         line += ' - ' + bug['summary']
         output += [line]
+        output.sort()
     return '\n'.join(output)
 
 params.update(generate_from_date_param(7))
