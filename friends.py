@@ -39,6 +39,7 @@ date_param = generate_date_param()
 email_params = []
 with open('emails.txt', 'r') as f:
     for i, email in enumerate(f, start=1):
+        email = email.strip()  # Remove newline
         email_params.extend(generate_email_params(email, i))
 
 params = '&'.join(CONST_PARAMS + [date_param] + email_params)
