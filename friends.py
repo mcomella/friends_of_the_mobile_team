@@ -9,10 +9,9 @@ BASE_URL = 'https://bugzilla.mozilla.org/rest/bug'
 
 params = {
     'include_fields': [
-        'id',
-        'summary',
-        'status',
         'assigned_to',
+        'id',
+        'summary'
     ],
     'product': [
         'Android Background Services',
@@ -47,14 +46,26 @@ def generate_from_date_param(days_ago):
     return {'chfieldfrom': date_str}
 
 
+def convert_to_wiki_markup(json):
+    json = json['bugs']
+
+    output = []
+    for bug in json:
+        name = bug['assigned_to_detail']['real_name']
+        line = '*' + name + ' fixed {{bug|' + str(bug['id']) + '}}'
+        line += ' - ' + bug['summary']
+        output += [line]
+    return '\n'.join(output)
+
 params.update(generate_from_date_param(7))
 with open('emails.txt', 'r') as f:
     for i, email in enumerate(f, start=1):
         email = email.strip()  # Remove newline
         params.update(generate_email_param(email, i))
 
-r = requests.get(BASE_URL, params=params)
+result = requests.get(BASE_URL, params=params)
+markup = convert_to_wiki_markup(result.json())
 
-# TOOD: Remove debug output.
-pp = pprint.PrettyPrinter(indent=4)
-pp.pprint(r.json())
+# Some characters received may cause an exception so encode:
+#   http://stackoverflow.com/a/492711
+print markup.encode('utf-8')
