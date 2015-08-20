@@ -2,7 +2,6 @@
 
 from datetime import datetime, timedelta
 import requests
-import urllib
 
 import pprint
 
