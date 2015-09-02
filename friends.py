@@ -51,12 +51,20 @@ def convert_to_wiki_markup(json):
 
     output = []
     for bug in json:
-        name = bug['assigned_to_detail']['real_name']
+        name = get_display_name(bug)
         line = '*' + name + ' fixed {{bug|' + str(bug['id']) + '}}'
         line += ' - ' + bug['summary']
         output += [line]
         output.sort()
     return '\n'.join(output)
+
+
+def get_display_name(bug):
+    out = bug['assigned_to_detail']['real_name']
+    if not out:
+        out = bug['assigned_to_detail']['email']
+        out = out.split('@')[0]
+    return out
 
 params.update(generate_from_date_param(7))
 with open('emails.txt', 'r') as f:
