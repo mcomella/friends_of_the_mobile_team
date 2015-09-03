@@ -40,6 +40,14 @@ def generate_email_param(address, count):
     }
 
 
+def exclude_mozilla_addresses():
+    return {
+        'emailtype999': 'notsubstring',
+        'emailassigned_to999': '1',
+        'email999': '@mozilla.com'
+    }
+
+
 def generate_from_date_param(days_ago):
     'Returns the date seven days ago in the YYYY-MM-DD format.'
     date_str = (datetime.now() - timedelta(days=days_ago)).strftime('%Y-%m-%d')
@@ -67,6 +75,7 @@ def get_display_name(bug):
     return out
 
 params.update(generate_from_date_param(7))
+params.update(exclude_mozilla_addresses())
 with open('emails.txt', 'r') as f:
     for i, email in enumerate(f, start=1):
         email = email.strip()  # Remove newline
