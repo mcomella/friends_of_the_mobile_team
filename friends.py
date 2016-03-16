@@ -19,10 +19,10 @@ params = {
         'Firefox for iOS',
     ],
     'bug_status': 'RESOLVED',
-    'chfield': 'bug_status',
+    'resolution': 'FIXED',
+    'chfield': 'resolution',
     'chfieldto': 'Now',
-    # TODO: Only fixed?
-    'chfieldvalue': 'RESOLVED',
+    'chfieldvalue': 'FIXED',
 }
 
 
